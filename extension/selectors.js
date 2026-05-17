@@ -93,16 +93,69 @@ const PersianRTLSiteConfigs = {
       ".pb-md .prose",
     ],
   },
+  gemini: {
+    siteId: "gemini",
+    messages: [
+      ".conversation-container",
+      ".user-query-container",
+      ".markdown-main-panel",
+      ".model-response-text",
+      ".query-text",
+      '[data-test-id*="model-response"]',
+      "message-content",
+    ],
+    composer: [
+      ".textarea.new-input-ui > p",
+      ".textarea.new-input-ui",
+      "rich-textarea .ql-editor",
+      ".ql-editor",
+      'motion.div[contenteditable="true"][role="textbox"]',
+      'motion.div textarea',
+      'motion-textarea textarea',
+      'motion.div.ProseMirror[contenteditable="true"]',
+      'motion.div[contenteditable="true"][role="textbox"]',
+      'motion.div[contenteditable="true"]',
+      'motion-textarea div[contenteditable="true"]',
+      'div[contenteditable="true"][role="textbox"]',
+      'div[contenteditable="true"][data-placeholder]',
+      'textarea:not([disabled]):not([readonly])',
+    ],
+    overlays: ['[role="dialog"]', '[aria-modal="true"]', '[data-state="open"]'],
+    deepResearch: [
+      'button[data-test-id="thoughts-header-button"]',
+      '[class*="model-thoughts"]',
+      '[class*="thinking"]',
+      '[class*="thought"]',
+    ],
+    researchPlanSteps: "ul > li, ol > li",
+    researchPlanText: "p, span, li",
+    researchPlanTitle: "h1, h2, h3",
+    proseRoots: [
+      ".markdown-main-panel",
+      ".model-response-text",
+      "main .markdown",
+    ],
+  },
 };
+
+/**
+ * @param {string} host
+ * @returns {keyof typeof PersianRTLSiteConfigs}
+ */
+function resolveSiteKey(host) {
+  if (host.includes("perplexity")) return "perplexity";
+  if (host.includes("gemini.google") || host.includes("bard.google")) {
+    return "gemini";
+  }
+  return "chatgpt";
+}
 
 /**
  * @returns {object} Active selector config for the current host.
  */
 function getActiveSiteConfig() {
   const host = location.hostname.toLowerCase();
-  const siteKey = host.includes("perplexity")
-    ? "perplexity"
-    : "chatgpt";
+  const siteKey = resolveSiteKey(host);
   return {
     ...PersianRTLShared,
     ...PersianRTLSiteConfigs[siteKey],
