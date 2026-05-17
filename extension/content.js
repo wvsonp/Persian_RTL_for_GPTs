@@ -13,6 +13,9 @@
     markdownSelectors: PersianRTLSelectors.markdown,
     ltrBlocksSelector: PersianRTLSelectors.ltrBlocks,
     rtlTextBlocksSelector: PersianRTLSelectors.rtlTextBlocks,
+    researchPlanSteps: PersianRTLSelectors.researchPlanSteps,
+    researchPlanText: PersianRTLSelectors.researchPlanText,
+    researchPlanTitle: PersianRTLSelectors.researchPlanTitle,
   };
 
   function isEnabled() {

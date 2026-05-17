@@ -50,10 +50,27 @@ bdi[dir="ltr"] {
   unicode-bidi: isolate;
 }
 
-/* Deep Research plan card + per-line RTL blocks */
+/* Deep Research plan card (ChatGPT section.rounded-2xl) */
 .persian-rtl-deep-research {
   direction: rtl;
   text-align: right;
+}
+
+.persian-rtl-deep-research > div.flex.items-start.justify-between {
+  flex-direction: row-reverse;
+  text-align: right;
+}
+
+.persian-rtl-deep-research > div.flex.items-start.justify-between h2,
+.persian-rtl-deep-research h2.persian-rtl-block {
+  width: 100%;
+  text-align: right !important;
+  direction: rtl !important;
+}
+
+.persian-rtl-deep-research > div.flex.items-start.justify-between > div:last-child {
+  direction: ltr;
+  text-align: left;
 }
 
 .persian-rtl-block {
@@ -67,7 +84,18 @@ bdi[dir="ltr"] {
   list-style-position: inside;
 }
 
-/* ChatGPT plan rows: icon + text in a horizontal flex row */
+/* Plan step rows: li.flex.items-start.gap-3 (icon + Persian span) */
+.persian-rtl-deep-research li.persian-rtl-plan-step,
+.persian-rtl-deep-research ul.space-y-4 > li.flex.items-start,
+.persian-rtl-deep-research li.flex.items-start.gap-3 {
+  flex-direction: row-reverse !important;
+  direction: rtl !important;
+  text-align: right !important;
+  justify-content: flex-start !important;
+}
+
+.persian-rtl-deep-research li.persian-rtl-plan-step .min-w-0.flex-1,
+.persian-rtl-deep-research li.persian-rtl-plan-step .min-w-0.flex-1 span,
 .persian-rtl-deep-research li.persian-rtl-block > div,
 .persian-rtl-deep-research li.persian-rtl-block > motion.div,
 .persian-rtl-markdown[dir="rtl"] li.persian-rtl-block > div,
@@ -78,7 +106,9 @@ bdi[dir="ltr"] {
 .persian-rtl-markdown[dir="rtl"] li.persian-rtl-block [class*="flex-row"] {
   flex-direction: row-reverse !important;
   justify-content: flex-end;
-  text-align: right;
+  text-align: right !important;
+  direction: rtl !important;
+  unicode-bidi: plaintext;
 }
 
 .persian-rtl-deep-research ul,

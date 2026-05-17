@@ -25,6 +25,8 @@ const PersianRTLSelectors = {
   ],
   /** Deep Research plan / question cards (not always role=dialog). */
   deepResearch: [
+    "section.rounded-2xl.border.p-4",
+    "section.bg-token-main-surface-primary.rounded-2xl",
     '[data-testid*="research"]',
     '[data-testid*="deep-research"]',
     '[data-testid*="deep_research"]',
@@ -32,8 +34,13 @@ const PersianRTLSelectors = {
     '[class*="DeepResearch"]',
     '[class*="research-plan"]',
   ],
+  /** Plan step rows (icon + Persian text). ChatGPT May 2026 DOM. */
+  researchPlanSteps: "ul.space-y-4 > li.flex.items-start, ul > li.flex.items-start.gap-3",
+  researchPlanText:
+    "span.block.break-words, span.block[class*='min-h-'], li.flex.items-start .min-w-0.flex-1 span",
+  researchPlanTitle: "section.rounded-2xl h2, section.bg-token-main-surface-primary h2",
   rtlTextBlocks:
-    "p, li, h1, h2, h3, h4, h5, h6, [role='listitem'], [role='heading'], dt, dd, blockquote, figcaption",
+    "p, li, h1, h2, h3, h4, h5, h6, span.block, [role='listitem'], [role='heading'], dt, dd, blockquote, figcaption",
   ltrBlocks: "pre, code, kbd, samp, var, .math, .katex",
 };
 

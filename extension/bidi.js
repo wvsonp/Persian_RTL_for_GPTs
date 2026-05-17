@@ -10,6 +10,7 @@ const PersianRTL = (() => {
   const MARKDOWN_CLASS = "persian-rtl-markdown";
   const BLOCK_CLASS = "persian-rtl-block";
   const DEEP_RESEARCH_CLASS = "persian-rtl-deep-research";
+  const PLAN_STEP_CLASS = "persian-rtl-plan-step";
 
   /**
    * @param {string} text
@@ -143,12 +144,39 @@ const PersianRTL = (() => {
    * Find innermost containers that look like a Deep Research plan (RTL list + steps).
    * @returns {Element[]}
    */
+  function isResearchPlanSection(el) {
+    if (el.tagName !== "SECTION") return false;
+    const list = el.querySelector("ul.space-y-4, ul");
+    if (!list) return false;
+    return (
+      el.classList.contains("rounded-2xl") &&
+      containsRTL(getNodeText(list))
+    );
+  }
+
   function findResearchPlanCards() {
     const candidates = [];
+
+    document
+      .querySelectorAll(
+        "section.rounded-2xl.border.p-4, section.bg-token-main-surface-primary.rounded-2xl"
+      )
+      .forEach((section) => {
+        if (isResearchPlanSection(section)) {
+          candidates.push(section);
+        }
+      });
+
     document.querySelectorAll("ul, ol").forEach((list) => {
       if (!containsRTL(getNodeText(list))) return;
       const items = list.querySelectorAll(":scope > li");
       if (items.length < 2) return;
+
+      const section = list.closest("section");
+      if (section && isResearchPlanSection(section)) {
+        if (!candidates.includes(section)) candidates.push(section);
+        return;
+      }
 
       let root = list.parentElement;
       for (let depth = 0; depth < 10 && root && root !== document.body; depth++) {
@@ -169,11 +197,96 @@ const PersianRTL = (() => {
   }
 
   /**
+   * ChatGPT Deep Research plan card (section > h2 + ul.space-y-4 > li.flex).
+   * @param {Element} section
+   * @param {object} options
+   * @returns {boolean}
+   */
+  function fixResearchPlanSection(section, options) {
+    const {
+      researchPlanSteps,
+      researchPlanText,
+      researchPlanTitle,
+      rtlTextBlocksSelector,
+    } = options;
+
+    if (!containsRTL(getNodeText(section))) return false;
+
+    section.classList.add(DEEP_RESEARCH_CLASS);
+    section.setAttribute("dir", "rtl");
+    section.setAttribute(PROCESSED_ATTR, "deep-research");
+
+    if (researchPlanTitle) {
+      section.querySelectorAll(researchPlanTitle).forEach((title) => {
+        if (!containsRTL(getNodeText(title))) return;
+        title.setAttribute("dir", "rtl");
+        title.classList.add(BLOCK_CLASS);
+      });
+    }
+
+    section.querySelectorAll("h2").forEach((title) => {
+      if (!containsRTL(getNodeText(title))) return;
+      title.setAttribute("dir", "rtl");
+      title.classList.add(BLOCK_CLASS);
+    });
+
+    const stepSelector =
+      researchPlanSteps || "ul.space-y-4 > li.flex.items-start, ul > li.flex.items-start";
+    section.querySelectorAll(stepSelector).forEach((li) => {
+      if (!containsRTL(getNodeText(li))) return;
+      li.setAttribute("dir", "rtl");
+      li.classList.add(BLOCK_CLASS, PLAN_STEP_CLASS);
+
+      const textSelector =
+        researchPlanText ||
+        "span.block.break-words, li.flex.items-start .min-w-0.flex-1 span";
+      li.querySelectorAll(textSelector).forEach((span) => {
+        if (!containsRTL(getNodeText(span))) return;
+        span.setAttribute("dir", "rtl");
+        span.classList.add(BLOCK_CLASS);
+        wrapInlineLatinRuns(span);
+      });
+    });
+
+    fixRtlTextBlocks(section, rtlTextBlocksSelector);
+
+    section.querySelectorAll("p.loading-shimmer, .loading-shimmer").forEach((el) => {
+      if (containsRTL(getNodeText(el))) return;
+      el.setAttribute("dir", "ltr");
+      el.classList.add(LTR_ISLAND_CLASS);
+    });
+
+    const headerActions = section.querySelector(
+      ".flex.items-start.justify-between > div:last-child"
+    );
+    if (headerActions?.querySelector("button")) {
+      headerActions.setAttribute("dir", "ltr");
+      headerActions.classList.add(LTR_ISLAND_CLASS);
+    }
+
+    const progressRow = section.querySelector(
+      ".mt-4.flex.flex-col.gap-2, div.flex.flex-row.items-center.gap-3"
+    );
+    if (progressRow && !containsRTL(getNodeText(progressRow))) {
+      progressRow.setAttribute("dir", "ltr");
+      progressRow.classList.add(LTR_ISLAND_CLASS);
+    }
+
+    return true;
+  }
+
+  /**
    * @param {Element} el
    * @param {object} options
    * @returns {boolean}
    */
   function fixDeepResearchPanel(el, options) {
+    if (isResearchPlanSection(el) || el.tagName === "SECTION") {
+      if (isResearchPlanSection(el)) {
+        return fixResearchPlanSection(el, options);
+      }
+    }
+
     const {
       markdownSelectors,
       ltrBlocksSelector,
@@ -181,6 +294,13 @@ const PersianRTL = (() => {
     } = options;
     const text = getNodeText(el);
     if (!containsRTL(text)) return false;
+
+    const section = el.closest(
+      "section.rounded-2xl.border.p-4, section.bg-token-main-surface-primary.rounded-2xl"
+    );
+    if (section && isResearchPlanSection(section)) {
+      return fixResearchPlanSection(section, options);
+    }
 
     el.classList.add(DEEP_RESEARCH_CLASS);
     el.setAttribute("dir", "rtl");
@@ -274,6 +394,7 @@ const PersianRTL = (() => {
           MARKDOWN_CLASS,
           BLOCK_CLASS,
           DEEP_RESEARCH_CLASS,
+          PLAN_STEP_CLASS,
           LTR_ISLAND_CLASS,
           "persian-rtl-composer"
         );
@@ -293,7 +414,9 @@ const PersianRTL = (() => {
     fixComposer,
     fixOverlay,
     fixDeepResearchPanel,
+    fixResearchPlanSection,
     findResearchPlanCards,
+    isResearchPlanSection,
     unfixAll,
     PROCESSED_ATTR,
   };

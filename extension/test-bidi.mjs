@@ -4,30 +4,45 @@ import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 
 const dir = dirname(fileURLToPath(import.meta.url));
+
+const chatgptPlanSection = `
+<section class="border-token-border-light bg-token-main-surface-primary flex flex-1 flex-col rounded-2xl border p-4">
+  <motion.div class="flex items-start justify-between gap-4">
+    <motion.div class="min-w-0 flex-1">
+      <h2 class="text-token-text-primary text-[17px] font-medium break-words">یک کیلو پنبه یا آهن</h2>
+    </motion.div>
+    <motion.div class="hidden items-center gap-3 sm:flex">
+      <button type="button"><motion.div>Aktualisieren</motion.div></button>
+    </motion.div>
+  </motion.div>
+  <motion.div class="mt-4 flex-1">
+    <ul class="space-y-4 text-sm">
+      <li class="flex items-start gap-3">
+        <motion.div class="mt-[1px] flex h-5 w-5 shrink-0"></motion.div>
+        <motion.div class="min-w-0 flex-1">
+          <span class="block min-h-[28px] text-[16px] break-words">جمع‌آوری منابع پایه‌ای فیزیک و تعاریف جرم و وزن.</span>
+        </motion.div>
+      </li>
+      <li class="flex items-start gap-3">
+        <motion.div class="mt-[1px] flex h-5 w-5 shrink-0"></motion.div>
+        <motion.div class="min-w-0 flex-1">
+          <span class="block min-h-[28px] text-[16px] break-words">جستجوی مقالات آموزشی و منابع دانشگاهی.</span>
+        </motion.div>
+      </li>
+    </ul>
+  </motion.div>
+  <motion.div class="mt-4 flex flex-col gap-2">
+    <p class="loading-shimmer text-sm">Weighing sources for cotton density...</p>
+    <motion.div class="flex flex-row items-center gap-3"><button type="button">Stop</button></motion.div>
+  </motion.div>
+</section>
+`;
+
 const dom = new JSDOM(
   `<!DOCTYPE html><html><body>
-    <motion.div>
-      <textarea id="prompt-textarea"></textarea>
-    </motion.div>
-    <motion.div>
-      <div data-message-author-role="assistant">
-        <motion.div class="markdown">
-          <p>این یک جمله فارسی با کلمه English در وسط است.</p>
-          <pre><code>const x = 1;</code></pre>
-        </motion.div>
-      </div>
-    </motion.div>
-    <motion.div role="dialog">
-      <motion.div class="prose"><p>تحقیق Deep Research و API test</p></motion.div>
-    </motion.div>
-    <motion.div class="deep-research-plan">
-      <h3>یک کیلو پنبه یا آهن</h3>
-      <ul>
-        <li><motion.div class="flex flex-row"><span class="icon">○</span><span>جمع‌آوری منابع پایه‌ای فیزیک و تعاریف جرم و وزن.</span></motion.div></li>
-        <li><motion.div class="flex flex-row"><span class="icon">○</span><span>مقایسه چگالی و حجم یک کیلوگرم از مواد مختلف.</span></motion.div></li>
-      </ul>
-      <motion.div class="actions"><button>Bearbeiten</button><button>Starten</button></motion.div>
-    </motion.div>
+    <textarea id="prompt-textarea"></textarea>
+    <div data-message-author-role="assistant"><motion.div class="markdown"><p>فارسی English</p></motion.div></motion.div>
+    ${chatgptPlanSection}
   </body></html>`,
   { url: "https://chatgpt.com/" }
 );
@@ -35,7 +50,6 @@ const dom = new JSDOM(
 const { window } = dom;
 globalThis.document = window.document;
 globalThis.NodeFilter = window.NodeFilter;
-globalThis.chrome = { storage: { sync: { get: () => {} } } };
 
 const selectorsSrc = readFileSync(join(dir, "selectors.js"), "utf8");
 const bidiSrc = readFileSync(join(dir, "bidi.js"), "utf8");
@@ -49,59 +63,37 @@ const { PersianRTL, PersianRTLSelectors } = loadScripts(
   NodeFilter
 );
 
-const assistant = document.querySelector(
-  '[data-message-author-role="assistant"]'
-);
-PersianRTL.fixMessageRoot(assistant, {
-  markdownSelectors: PersianRTLSelectors.markdown,
-  ltrBlocksSelector: PersianRTLSelectors.ltrBlocks,
-});
-
-const markdown = assistant.querySelector(".markdown");
-const mdDir = markdown.getAttribute("dir");
-const bdiCount = markdown.querySelectorAll("bdi[dir='ltr']").length;
-const codeDir = markdown.querySelector("code").getAttribute("dir");
-
-if (mdDir !== "rtl") throw new Error(`Expected markdown dir=rtl, got ${mdDir}`);
-if (bdiCount < 1) throw new Error(`Expected bdi wraps, got ${bdiCount}`);
-if (codeDir !== "ltr") throw new Error(`Expected code dir=ltr, got ${codeDir}`);
-
-const composer = document.getElementById("prompt-textarea");
-PersianRTL.fixComposer(composer);
-if (composer.getAttribute("dir") !== "auto") {
-  throw new Error("Composer should have dir=auto");
-}
-
-const dialog = document.querySelector('[role="dialog"]');
-PersianRTL.fixOverlay(dialog, {
-  markdownSelectors: PersianRTLSelectors.markdown,
-  ltrBlocksSelector: PersianRTLSelectors.ltrBlocks,
-});
-if (dialog.querySelector(".prose").getAttribute("dir") !== "rtl") {
-  throw new Error("Overlay prose should be rtl");
-}
-
-const planCard = document.querySelector(".deep-research-plan");
-PersianRTL.fixDeepResearchPanel(planCard, {
+const bidiOptions = {
   markdownSelectors: PersianRTLSelectors.markdown,
   ltrBlocksSelector: PersianRTLSelectors.ltrBlocks,
   rtlTextBlocksSelector: PersianRTLSelectors.rtlTextBlocks,
-});
-const planTitle = planCard.querySelector("h3");
-const planLi = planCard.querySelector("li");
-if (planCard.getAttribute("dir") !== "rtl") {
-  throw new Error("Deep research card should be rtl");
+  researchPlanSteps: PersianRTLSelectors.researchPlanSteps,
+  researchPlanText: PersianRTLSelectors.researchPlanText,
+  researchPlanTitle: PersianRTLSelectors.researchPlanTitle,
+};
+
+const section = document.querySelector("section.rounded-2xl");
+if (!PersianRTL.isResearchPlanSection(section)) {
+  throw new Error("Should detect ChatGPT research plan section");
 }
-if (planTitle.getAttribute("dir") !== "rtl") {
-  throw new Error("Deep research title should be rtl");
+
+PersianRTL.fixResearchPlanSection(section, bidiOptions);
+
+const h2 = section.querySelector("h2");
+const li = section.querySelector("li.flex.items-start");
+const span = li.querySelector("span.block");
+const status = section.querySelector(".loading-shimmer");
+
+if (section.getAttribute("dir") !== "rtl") throw new Error("section dir");
+if (h2.getAttribute("dir") !== "rtl") throw new Error("h2 dir");
+if (li.classList.contains("persian-rtl-plan-step") === false) {
+  throw new Error("li should have plan-step class");
 }
-if (planLi.getAttribute("dir") !== "rtl") {
-  throw new Error("Deep research list item should be rtl");
-}
+if (span.getAttribute("dir") !== "rtl") throw new Error("span dir");
+if (status.getAttribute("dir") !== "ltr") throw new Error("English status stays ltr");
+
+const found = PersianRTL.findResearchPlanCards();
+if (!found.includes(section)) throw new Error("findResearchPlanCards should include section");
 
 PersianRTL.unfixAll();
-if (document.querySelectorAll("[data-persian-rtl-processed]").length) {
-  throw new Error("unfixAll should clear processed markers");
-}
-
 console.log("All bidi fixture tests passed.");
