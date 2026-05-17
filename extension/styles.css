@@ -1,3 +1,49 @@
+/* Twitter / X "Chirp" — same family used for Persian tweets on x.com */
+@font-face {
+  font-family: "TwitterChirp";
+  src: url("fonts/Chirp-Light.3a18e64a.woff2") format("woff2");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "TwitterChirp";
+  src: url("fonts/Chirp-Regular.80fda27a.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "TwitterChirp";
+  src: url("fonts/Chirp-Medium.f8e2739a.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "TwitterChirp";
+  src: url("fonts/Chirp-Bold.ebb56aba.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "TwitterChirp";
+  src: url("fonts/Chirp-Heavy.f44ae4ea.woff2") format("woff2");
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --persian-rtl-font-family: "TwitterChirp", -apple-system, BlinkMacSystemFont,
+    "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
 /* LTR enclaves inside RTL messages (code, pre, etc.) */
 .persian-rtl-ltr-island {
   direction: ltr;
@@ -40,10 +86,18 @@
   text-align: left;
 }
 
-/* Optional Persian-friendly font for RTL blocks */
-[dir="rtl"].persian-rtl-markdown,
-[dir="rtl"].persian-rtl-markdown *:not(code):not(pre):not(kbd):not(samp) {
-  font-family: Vazirmatn, Tahoma, "Segoe UI", Arial, sans-serif;
+/* Persian text: match X (Twitter) tweet typography (Chirp) */
+.persian-rtl-markdown,
+.persian-rtl-markdown *:not(code):not(pre):not(kbd):not(samp):not(var),
+.persian-rtl-block,
+.persian-rtl-deep-research,
+.persian-rtl-deep-research
+  *:not(code):not(pre):not(kbd):not(samp):not(var):not(.persian-rtl-ltr-island):not(
+    .persian-rtl-ltr-island *
+  ),
+.persian-rtl-composer {
+  font-family: var(--persian-rtl-font-family);
+  -webkit-font-smoothing: antialiased;
 }
 
 bdi[dir="ltr"] {
