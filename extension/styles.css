@@ -1,3 +1,49 @@
+/* Twitter / X "Chirp" — same family used for Persian tweets on x.com */
+@font-face {
+  font-family: "TwitterChirp";
+  src: url("fonts/Chirp-Light.3a18e64a.woff2") format("woff2");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "TwitterChirp";
+  src: url("fonts/Chirp-Regular.80fda27a.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "TwitterChirp";
+  src: url("fonts/Chirp-Medium.f8e2739a.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "TwitterChirp";
+  src: url("fonts/Chirp-Bold.ebb56aba.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "TwitterChirp";
+  src: url("fonts/Chirp-Heavy.f44ae4ea.woff2") format("woff2");
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --persian-rtl-font-family: "TwitterChirp", -apple-system, BlinkMacSystemFont,
+    "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
 /* LTR enclaves inside RTL messages (code, pre, etc.) */
 .persian-rtl-ltr-island {
   direction: ltr;
@@ -13,9 +59,35 @@
 }
 
 .persian-rtl-markdown[dir="rtl"] ul,
-.persian-rtl-markdown[dir="rtl"] ol {
-  padding-right: 1.5em;
-  padding-left: 0;
+.persian-rtl-markdown[dir="rtl"] ol,
+.persian-rtl-markdown[dir="auto"] ul,
+.persian-rtl-markdown[dir="auto"] ol,
+ul.persian-rtl-list,
+ol.persian-rtl-list {
+  direction: rtl !important;
+  padding-inline-end: 1.5em;
+  padding-inline-start: 0;
+  list-style-position: outside;
+  text-align: right;
+}
+
+.persian-rtl-markdown[dir="rtl"] ul > li,
+.persian-rtl-markdown[dir="rtl"] ol > li,
+ul.persian-rtl-list > li,
+ol.persian-rtl-list > li {
+  direction: rtl;
+  text-align: right;
+  list-style-position: outside;
+  display: list-item;
+}
+
+/* li > p (Gemini): keep RTL + isolate so markers stay on the right */
+ul.persian-rtl-list > li > p.persian-rtl-block:not(.persian-rtl-mixed),
+ol.persian-rtl-list > li > p.persian-rtl-block:not(.persian-rtl-mixed) {
+  direction: rtl;
+  text-align: right;
+  unicode-bidi: isolate;
+  margin-block: 0;
 }
 
 .persian-rtl-markdown[dir="rtl"] blockquote {
@@ -40,13 +112,22 @@
   text-align: left;
 }
 
-/* Optional Persian-friendly font for RTL blocks */
-[dir="rtl"].persian-rtl-markdown,
-[dir="rtl"].persian-rtl-markdown *:not(code):not(pre):not(kbd):not(samp) {
-  font-family: Vazirmatn, Tahoma, "Segoe UI", Arial, sans-serif;
+/* Persian text: match X (Twitter) tweet typography (Chirp) */
+.persian-rtl-markdown,
+.persian-rtl-markdown *:not(code):not(pre):not(kbd):not(samp):not(var),
+.persian-rtl-block,
+.persian-rtl-deep-research,
+.persian-rtl-deep-research
+  *:not(code):not(pre):not(kbd):not(samp):not(var):not(.persian-rtl-ltr-island):not(
+    .persian-rtl-ltr-island *
+  ),
+.persian-rtl-composer {
+  font-family: var(--persian-rtl-font-family);
+  -webkit-font-smoothing: antialiased;
 }
 
 bdi[dir="ltr"] {
+  direction: ltr;
   unicode-bidi: isolate;
 }
 
@@ -74,14 +155,25 @@ bdi[dir="ltr"] {
 }
 
 .persian-rtl-block {
-  direction: rtl !important;
-  text-align: right !important;
+  direction: rtl;
+  text-align: right;
+}
+
+.persian-rtl-block.persian-rtl-mixed,
+.persian-rtl-markdown.persian-rtl-mixed,
+.persian-rtl-markdown[dir="auto"] {
+  direction: auto;
+  text-align: start;
   unicode-bidi: plaintext;
 }
 
-.persian-rtl-deep-research li.persian-rtl-block,
-.persian-rtl-markdown[dir="rtl"] li.persian-rtl-block {
-  list-style-position: inside;
+.persian-rtl-mixed > b.persian-rtl-ltr-island,
+.persian-rtl-mixed > strong.persian-rtl-ltr-island,
+.persian-rtl-block.persian-rtl-mixed > b.persian-rtl-ltr-island,
+.persian-rtl-block.persian-rtl-mixed > strong.persian-rtl-ltr-island {
+  direction: ltr;
+  unicode-bidi: isolate;
+  display: inline;
 }
 
 /* Plan step rows: li.flex.items-start.gap-3 (icon + Persian span) */
@@ -96,14 +188,12 @@ bdi[dir="ltr"] {
 
 .persian-rtl-deep-research li.persian-rtl-plan-step .min-w-0.flex-1,
 .persian-rtl-deep-research li.persian-rtl-plan-step .min-w-0.flex-1 span,
+.persian-rtl-deep-research li.persian-rtl-plan-step > div,
+.persian-rtl-deep-research li.persian-rtl-plan-step > motion.div,
 .persian-rtl-deep-research li.persian-rtl-block > div,
 .persian-rtl-deep-research li.persian-rtl-block > motion.div,
-.persian-rtl-markdown[dir="rtl"] li.persian-rtl-block > div,
-.persian-rtl-markdown[dir="rtl"] li.persian-rtl-block > motion.div,
-.persian-rtl-block[class*="flex"],
 .persian-rtl-deep-research .persian-rtl-block .flex,
-.persian-rtl-deep-research li.persian-rtl-block [class*="flex-row"],
-.persian-rtl-markdown[dir="rtl"] li.persian-rtl-block [class*="flex-row"] {
+.persian-rtl-deep-research li.persian-rtl-block [class*="flex-row"] {
   flex-direction: row-reverse !important;
   justify-content: flex-end;
   text-align: right !important;
