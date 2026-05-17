@@ -63,7 +63,123 @@ const PersianRTL = (() => {
    * @returns {boolean}
    */
   function isInsideLtrIsland(el) {
-    return Boolean(el.closest("pre, code, kbd, samp, var, .katex, .math"));
+    return Boolean(
+      el.closest(
+        `pre, code, kbd, samp, var, .katex, .math, .${LTR_ISLAND_CLASS}, bdi[dir="ltr"]`
+      )
+    );
+  }
+
+  /**
+   * English (or Latin-only) label, e.g. Gemini's leading &lt;b&gt; term.
+   * @param {Element} el
+   * @returns {boolean}
+   */
+  function isLatinPrimaryElement(el) {
+    const text = getNodeText(el);
+    return containsLatinLetter(text) && !containsRTL(text);
+  }
+
+  /**
+   * Paragraph with a Latin &lt;b&gt;/&lt;strong&gt; label and Persian body (Gemini glossary rows).
+   * @param {Element} block
+   * @returns {boolean}
+   */
+  function hasLatinLabelChild(block) {
+    const label = block.querySelector(":scope > b, :scope > strong");
+    return Boolean(
+      label && isLatinPrimaryElement(label) && containsRTL(getNodeText(block))
+    );
+  }
+
+  /**
+   * Replace split &lt;bdi&gt; words inside a Latin label with one LTR isolate.
+   * @param {Element} el
+   */
+  function consolidateLatinLabelElement(el) {
+    if (!isLatinPrimaryElement(el)) return;
+    if (el.getAttribute(PROCESSED_ATTR) === "latin-label") return;
+
+    const text = getNodeText(el);
+    while (el.firstChild) {
+      el.removeChild(el.firstChild);
+    }
+
+    const bdi = document.createElement("bdi");
+    bdi.setAttribute("dir", "ltr");
+    bdi.textContent = text;
+    el.appendChild(bdi);
+    el.setAttribute("dir", "ltr");
+    el.classList.add(LTR_ISLAND_CLASS);
+    el.setAttribute(PROCESSED_ATTR, "latin-label");
+  }
+
+  /**
+   * Gemini (and similar) put English terms in &lt;b&gt; with one word per text node.
+   * @param {Element} root
+   */
+  function fixLatinLabelElements(root) {
+    root.querySelectorAll("b, strong").forEach((el) => {
+      if (isInsideLtrIsland(el)) return;
+      if (el.closest("pre, code, kbd, samp, var")) return;
+      consolidateLatinLabelElement(el);
+    });
+  }
+
+  /**
+   * @param {Element} parent
+   */
+  function mergeBdiSiblings(parent) {
+    let merged = true;
+    while (merged) {
+      merged = false;
+      const nodes = Array.from(parent.childNodes);
+      for (let i = 0; i < nodes.length - 1; i++) {
+        const node = nodes[i];
+        if (node.nodeType !== 1) continue;
+        if (node.tagName !== "BDI" || node.getAttribute("dir") !== "ltr") continue;
+
+        let j = i + 1;
+        while (j < nodes.length) {
+          const next = nodes[j];
+          if (
+            next.nodeType === 3 &&
+            next.nodeValue &&
+            !next.nodeValue.trim()
+          ) {
+            node.textContent += next.nodeValue;
+            next.remove();
+            merged = true;
+            j++;
+            continue;
+          }
+          if (
+            next.nodeType === 1 &&
+            next.tagName === "BDI" &&
+            next.getAttribute("dir") === "ltr"
+          ) {
+            node.textContent += next.textContent;
+            next.remove();
+            merged = true;
+            j++;
+            continue;
+          }
+          break;
+        }
+      }
+    }
+  }
+
+  /**
+   * Collapse per-word &lt;bdi&gt; islands left from older runs or split text nodes.
+   * @param {Element} root
+   */
+  function mergeAdjacentBdiElements(root) {
+    const parents = new Set();
+    root.querySelectorAll('bdi[dir="ltr"]').forEach((bdi) => {
+      if (bdi.parentElement) parents.add(bdi.parentElement);
+    });
+    parents.forEach(mergeBdiSiblings);
   }
 
   /**
@@ -138,7 +254,7 @@ const PersianRTL = (() => {
     if (fragment.childNodes.length === 0) return;
     if (
       fragment.childNodes.length === 1 &&
-      fragment.firstChild.nodeType === Node.TEXT_NODE
+      fragment.firstChild.nodeType === 3
     ) {
       return;
     }
@@ -219,11 +335,13 @@ const PersianRTL = (() => {
       }
       const text = getNodeText(block);
       if (!containsRTL(text)) return;
-      if (isMixedRtlLatin(text)) {
+      const isMixed = isMixedRtlLatin(text) || hasLatinLabelChild(block);
+      if (isMixed) {
         block.setAttribute("dir", "auto");
         block.classList.add(BLOCK_CLASS, MIXED_CLASS);
       } else {
         block.setAttribute("dir", "rtl");
+        block.classList.remove(MIXED_CLASS);
         block.classList.add(BLOCK_CLASS);
       }
     });
@@ -424,7 +542,9 @@ const PersianRTL = (() => {
       contentRoot.setAttribute("dir", "rtl");
       contentRoot.setAttribute(PROCESSED_ATTR, "1");
       applyLtrIslands(contentRoot, ltrBlocksSelector);
+      fixLatinLabelElements(contentRoot);
       wrapInlineLatinRuns(contentRoot);
+      mergeAdjacentBdiElements(contentRoot);
     }
 
     fixRtlTextBlocks(el, rtlTextBlocksSelector);
@@ -458,7 +578,9 @@ const PersianRTL = (() => {
     }
 
     applyLtrIslands(contentRoot, ltrBlocksSelector);
+    fixLatinLabelElements(contentRoot);
     wrapInlineLatinRuns(contentRoot);
+    mergeAdjacentBdiElements(contentRoot);
     fixRtlLists(contentRoot);
     fixRtlTextBlocks(
       contentRoot,

@@ -137,6 +137,32 @@ runSiteTests(
 
 runSiteTests(
   "https://gemini.google.com/app",
+  `<div class="markdown-main-panel"><ul dir="rtl" class="persian-rtl-list">
+    <li><p dir="rtl" class="persian-rtl-block"><b><bdi dir="ltr">Artificial</bdi> <bdi dir="ltr">Intelligence</bdi> (<bdi dir="ltr">AI</bdi>)<bdi dir="ltr">:</bdi></b> هوش مصنوعی</p></li>
+  </ul></div>`,
+  ({ PersianRTL, bidiOptions }) => {
+    const panel = document.querySelector(".markdown-main-panel");
+    PersianRTL.fixMessageRoot(panel, bidiOptions);
+    const b = panel.querySelector("b");
+    const bdis = b.querySelectorAll("bdi");
+    if (bdis.length !== 1) {
+      throw new Error(
+        `Gemini label should be one bdi, got ${bdis.length}: ${b.innerHTML}`
+      );
+    }
+    if (!/Artificial Intelligence \(AI\):/.test(bdis[0].textContent)) {
+      throw new Error("Gemini label phrase order inside bdi");
+    }
+    const p = panel.querySelector("p");
+    if (!p.classList.contains("persian-rtl-mixed") || p.getAttribute("dir") !== "auto") {
+      throw new Error("Gemini glossary row should be dir=auto mixed");
+    }
+    PersianRTL.unfixAll();
+  }
+);
+
+runSiteTests(
+  "https://gemini.google.com/app",
   `<div class="markdown-main-panel"><ul>
     <li><div class="flex gap-2"><span>•</span><p>نکته اول</p></div></li>
   </ul></div>`,
