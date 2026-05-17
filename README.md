@@ -48,8 +48,8 @@ Chrome extension that fixes mixed **Persian (RTL)** and **English (LTR)** text r
 
 ```bash
 cd extension
-npm install jsdom
-node test-bidi.mjs
+npm install
+npm test
 ```
 
 ## Roadmap
