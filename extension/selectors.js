@@ -60,8 +60,8 @@ const PersianRTLSiteConfigs = {
     ],
     composer: [
       "#ask-input",
-      'textarea#ask-input',
-      'div#ask-input[contenteditable="true"]',
+      "textarea#ask-input",
+      'motion.div#ask-input',
       'div#ask-input[contenteditable="true"]',
       'textarea[placeholder*="Ask"]',
       'textarea[placeholder*="Search"]',
