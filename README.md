@@ -36,6 +36,7 @@ Chrome extension that fixes mixed **Persian (RTL)** and **English (LTR)** text r
 ## How it works
 
 - Shared `bidi.js` for RTL detection, `<bdi>` wrapping, and LTR code islands.
+- **Typography**: Persian/Arabic blocks use **Twitter Chirp** (the same typeface family X uses for tweets), bundled so host-site CSP does not block web fonts.
 - Per-site selectors in `selectors.js` (`getActiveSiteConfig()`).
 - Debounced `MutationObserver` for streaming answers and dynamic UI.
 

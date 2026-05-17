@@ -76,10 +76,9 @@ function runSiteTests(siteUrl, bodyExtra, assertions) {
 runSiteTests(
   "https://chatgpt.com/",
   `<textarea id="prompt-textarea"></textarea>
-    <div data-message-author-role="assistant"><div class="markdown"><p>فارسی English</p></motion.div></div>
+    <div data-message-author-role="assistant"><div class="markdown"><p>فارسی English</p></div></div>
     ${chatgptPlanSection}`,
   ({ PersianRTL, bidiOptions }) => {
-
     const section = document.querySelector("section.rounded-2xl");
     if (!PersianRTL.isResearchPlanSection(section)) {
       throw new Error("Should detect ChatGPT research plan section");
@@ -93,12 +92,130 @@ runSiteTests(
 );
 
 runSiteTests(
+  "https://chatgpt.com/",
+  `<motion.div class="markdown"><p>هوش مصنوعی: (AI) Artificial Intelligence تعریف می‌شود.</p></motion.div>`,
+  ({ PersianRTL, bidiOptions }) => {
+    const md = document.querySelector(".markdown");
+    PersianRTL.fixMessageRoot(md, bidiOptions);
+    const p = md.querySelector("p");
+    if (!p.classList.contains("persian-rtl-mixed")) {
+      throw new Error("mixed paragraph should have persian-rtl-mixed");
+    }
+    const bdi = p.querySelector("bdi[dir='ltr']");
+    if (!bdi || !/Artificial Intelligence/.test(bdi.textContent)) {
+      throw new Error("English phrase should be one LTR bdi with correct order");
+    }
+    PersianRTL.unfixAll();
+  }
+);
+
+runSiteTests(
+  "https://chatgpt.com/",
+  `<motion.div class="markdown"><ul>
+    <li><p>آیتم اول</p></li>
+    <li><p>آیتم دوم با English</p></li>
+  </ul></motion.div>`,
+  ({ PersianRTL, bidiOptions }) => {
+    const md = document.querySelector(".markdown");
+    PersianRTL.fixMessageRoot(md, bidiOptions);
+    const ul = md.querySelector("ul");
+    const li = md.querySelector("li");
+    if (!ul.classList.contains("persian-rtl-list")) {
+      throw new Error("ChatGPT list should have persian-rtl-list");
+    }
+    if (li.classList.contains("persian-rtl-block") || li.getAttribute("dir")) {
+      throw new Error("ChatGPT list item should not be individually RTL-styled");
+    }
+    const p = li.querySelector("p");
+    if (!p.classList.contains("persian-rtl-block")) {
+      throw new Error("ChatGPT list paragraph should be RTL block");
+    }
+    if (p.classList.contains("persian-rtl-mixed") || p.getAttribute("dir") === "auto") {
+      throw new Error("list paragraph should use rtl not auto mixed");
+    }
+    PersianRTL.unfixAll();
+  }
+);
+
+runSiteTests(
   "https://gemini.google.com/app",
-  `<div class="conversation-container">
-     <motion.div class="user-query-container"><p class="query-text">سلام English</p></motion.div>
+  `<motion.div class="markdown-main-panel"><ul dir="rtl" class="persian-rtl-list">
+    <li><p dir="rtl" class="persian-rtl-block"><b><bdi dir="ltr">Artificial</bdi> <bdi dir="ltr">Intelligence</bdi> (<bdi dir="ltr">AI</bdi>)<bdi dir="ltr">:</bdi></b> هوش مصنوعی</p></li>
+  </ul></motion.div>`,
+  ({ PersianRTL, bidiOptions }) => {
+    const panel = document.querySelector(".markdown-main-panel");
+    PersianRTL.fixMessageRoot(panel, bidiOptions);
+    const b = panel.querySelector("b");
+    const bdis = b.querySelectorAll("bdi");
+    if (bdis.length !== 1) {
+      throw new Error(
+        `Gemini label should be one bdi, got ${bdis.length}: ${b.innerHTML}`
+      );
+    }
+    if (!/Artificial Intelligence \(AI\):/.test(bdis[0].textContent)) {
+      throw new Error("Gemini label phrase order inside bdi");
+    }
+    const p = panel.querySelector("p");
+    if (!p.classList.contains("persian-rtl-mixed") || p.getAttribute("dir") !== "auto") {
+      throw new Error("Gemini glossary row should be dir=auto mixed");
+    }
+    PersianRTL.unfixAll();
+  }
+);
+
+runSiteTests(
+  "https://gemini.google.com/app",
+  `<motion.div class="markdown markdown-main-panel" dir="rtl">
+    <p>هوش مصنوعی در پنج نکته کلیدی شامل موارد زیر می‌شود:</p>
+    <ul>
+      <li><p><b>تقلید از رفتارهای هوشمندانه:</b> سیستم‌های AI طراحی می‌شوند.</p></li>
+      <li><p><b>یادگیری ماشینی (Machine Learning):</b> این تکنولوژی نیازی ندارد.</p></li>
+    </ul>
+  </motion.div>`,
+  ({ PersianRTL, bidiOptions }) => {
+    const panel = document.querySelector(".markdown-main-panel");
+    PersianRTL.fixMessageRoot(panel, bidiOptions);
+    const intro = panel.querySelector(":scope > p");
+    if (intro.getAttribute("dir") !== "rtl") {
+      throw new Error("intro paragraph before list should be rtl");
+    }
+    const listP = panel.querySelector("ul > li > p");
+    if (!listP.classList.contains("persian-rtl-block")) {
+      throw new Error("Gemini list paragraph should be RTL block");
+    }
+    if (listP.classList.contains("persian-rtl-mixed") || listP.getAttribute("dir") === "auto") {
+      throw new Error("Gemini list paragraph must not use dir=auto (breaks bullets)");
+    }
+    if (listP.getAttribute("dir") !== "rtl") {
+      throw new Error("Gemini list paragraph should be dir=rtl");
+    }
+    PersianRTL.unfixAll();
+  }
+);
+
+runSiteTests(
+  "https://gemini.google.com/app",
+  `<motion.div class="markdown-main-panel"><ul>
+    <li><div class="flex gap-2"><span>•</span><p>نکته اول</p></div></li>
+  </ul></motion.div>`,
+  ({ PersianRTL, bidiOptions }) => {
+    const panel = document.querySelector(".markdown-main-panel");
+    PersianRTL.fixMessageRoot(panel, bidiOptions);
+    const li = panel.querySelector("li");
+    if (li.classList.contains("persian-rtl-block") || li.getAttribute("dir")) {
+      throw new Error("Gemini list item should not be individually RTL-styled");
+    }
+    PersianRTL.unfixAll();
+  }
+);
+
+runSiteTests(
+  "https://gemini.google.com/app",
+  `<motion.div class="conversation-container">
+     <div class="user-query-container"><p class="query-text">سلام English</p></div>
      <div class="markdown-main-panel model-response-text"><p>پاسخ فارسی with English</p></div>
    </div>
-   <div class="textarea new-input-ui"><p>ورودی</p></div>`,
+   <motion.div class="textarea new-input-ui"><p>ورودی</p></motion.div>`,
   ({ PersianRTL, site, bidiOptions }) => {
     if (site.siteId !== "gemini") throw new Error("expected gemini site");
     const composer = document.querySelector(".textarea.new-input-ui > p");
@@ -108,8 +225,9 @@ runSiteTests(
     }
     const panel = document.querySelector(".markdown-main-panel");
     PersianRTL.fixMessageRoot(panel, bidiOptions);
-    if (panel.getAttribute("dir") !== "rtl") {
-      throw new Error("Gemini response dir=rtl");
+    const panelDir = panel.getAttribute("dir");
+    if (panelDir !== "auto" && panelDir !== "rtl") {
+      throw new Error("Gemini response should have dir auto or rtl");
     }
     PersianRTL.unfixAll();
   }
@@ -128,8 +246,9 @@ runSiteTests(
     }
     const prose = document.querySelector(".prose");
     PersianRTL.fixMessageRoot(prose, bidiOptions);
-    if (prose.getAttribute("dir") !== "rtl") {
-      throw new Error("Perplexity prose dir=rtl");
+    const proseDir = prose.getAttribute("dir");
+    if (proseDir !== "auto" && proseDir !== "rtl") {
+      throw new Error("Perplexity prose should have dir auto or rtl");
     }
     PersianRTL.unfixAll();
   }

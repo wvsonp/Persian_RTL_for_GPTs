@@ -3,9 +3,9 @@
  */
 const PersianRTLShared = {
   rtlTextBlocks:
-    "p, li, h1, h2, h3, h4, h5, h6, span.block, [role='listitem'], [role='heading'], dt, dd, blockquote, figcaption",
+    "p, h1, h2, h3, h4, h5, h6, span.block, [role='heading'], dt, dd, blockquote, figcaption",
   ltrBlocks: "pre, code, kbd, samp, var, .math, .katex",
-  markdown: [".markdown", ".prose"],
+  markdown: [".markdown", ".prose", ".markdown-main-panel"],
 };
 
 const PersianRTLSiteConfigs = {
