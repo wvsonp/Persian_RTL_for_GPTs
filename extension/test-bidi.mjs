@@ -129,13 +129,14 @@ runSiteTests(
     if (li.classList.contains("persian-rtl-block") || li.getAttribute("dir")) {
       throw new Error("Gemini list item should not be individually RTL-styled");
     }
+    PersianRTL.unfixAll();
   }
 );
 
 runSiteTests(
   "https://gemini.google.com/app",
   `<div class="conversation-container">
-     <motion.div class="user-query-container"><p class="query-text">سلام English</p></motion.div>
+     <div class="user-query-container"><p class="query-text">سلام English</p></div>
      <div class="markdown-main-panel model-response-text"><p>پاسخ فارسی with English</p></div>
    </div>
    <div class="textarea new-input-ui"><p>ورودی</p></div>`,
