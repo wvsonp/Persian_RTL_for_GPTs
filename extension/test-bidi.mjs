@@ -93,6 +93,46 @@ runSiteTests(
 );
 
 runSiteTests(
+  "https://chatgpt.com/",
+  `<motion.div class="markdown"><ul>
+    <li><p>آیتم اول</p></li>
+    <li><p>آیتم دوم با English</p></li>
+  </ul></motion.div>`,
+  ({ PersianRTL, bidiOptions }) => {
+    const md = document.querySelector(".markdown");
+    PersianRTL.fixMessageRoot(md, bidiOptions);
+    const ul = md.querySelector("ul");
+    const li = md.querySelector("li");
+    if (!ul.classList.contains("persian-rtl-list")) {
+      throw new Error("ChatGPT list should have persian-rtl-list");
+    }
+    if (li.classList.contains("persian-rtl-block") || li.getAttribute("dir")) {
+      throw new Error("ChatGPT list item should not be individually RTL-styled");
+    }
+    const p = li.querySelector("p");
+    if (!p.classList.contains("persian-rtl-block")) {
+      throw new Error("ChatGPT list paragraph should be RTL block");
+    }
+    PersianRTL.unfixAll();
+  }
+);
+
+runSiteTests(
+  "https://gemini.google.com/app",
+  `<div class="markdown-main-panel"><ul>
+    <li><div class="flex gap-2"><span>•</span><p>نکته اول</p></div></li>
+  </ul></div>`,
+  ({ PersianRTL, bidiOptions }) => {
+    const panel = document.querySelector(".markdown-main-panel");
+    PersianRTL.fixMessageRoot(panel, bidiOptions);
+    const li = panel.querySelector("li");
+    if (li.classList.contains("persian-rtl-block") || li.getAttribute("dir")) {
+      throw new Error("Gemini list item should not be individually RTL-styled");
+    }
+  }
+);
+
+runSiteTests(
   "https://gemini.google.com/app",
   `<div class="conversation-container">
      <motion.div class="user-query-container"><p class="query-text">سلام English</p></motion.div>

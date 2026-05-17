@@ -11,6 +11,7 @@ const PersianRTL = (() => {
   const BLOCK_CLASS = "persian-rtl-block";
   const DEEP_RESEARCH_CLASS = "persian-rtl-deep-research";
   const PLAN_STEP_CLASS = "persian-rtl-plan-step";
+  const LIST_CLASS = "persian-rtl-list";
 
   /**
    * @param {string} text
@@ -34,6 +35,34 @@ const PersianRTL = (() => {
    */
   function isInsideLtrIsland(el) {
     return Boolean(el.closest("pre, code, kbd, samp, var, .katex, .math"));
+  }
+
+  /**
+   * @param {Element} el
+   * @returns {boolean}
+   */
+  function isNativeListItem(el) {
+    const parent = el.parentElement;
+    return (
+      el.tagName === "LI" &&
+      parent != null &&
+      (parent.tagName === "UL" || parent.tagName === "OL")
+    );
+  }
+
+  /**
+   * Deep Research / plan rows use flex + icons, not native list markers.
+   * @param {Element} li
+   * @returns {boolean}
+   */
+  function isPlanStepListItem(li) {
+    if (li.tagName !== "LI") return false;
+    if (li.classList.contains(PLAN_STEP_CLASS)) return true;
+    return Boolean(
+      li.closest(`.${DEEP_RESEARCH_CLASS}`) &&
+        li.classList.contains("flex") &&
+        li.classList.contains("items-start")
+    );
   }
 
   /**
@@ -133,10 +162,38 @@ const PersianRTL = (() => {
   function fixRtlTextBlocks(root, blockSelector) {
     root.querySelectorAll(blockSelector).forEach((block) => {
       if (isInsideLtrIsland(block)) return;
+      if (isNativeListItem(block)) return;
+      if (
+        block.getAttribute("role") === "listitem" &&
+        block.closest("ul, ol")
+      ) {
+        return;
+      }
       const text = getNodeText(block);
       if (!containsRTL(text)) return;
       block.setAttribute("dir", "rtl");
       block.classList.add(BLOCK_CLASS);
+    });
+  }
+
+  /**
+   * RTL native lists: set direction on ul/ol so markers stay beside text.
+   * @param {Element} root
+   */
+  function fixRtlLists(root) {
+    root.querySelectorAll("ul, ol").forEach((list) => {
+      if (isInsideLtrIsland(list)) return;
+      if (!containsRTL(getNodeText(list))) return;
+
+      list.setAttribute("dir", "rtl");
+      list.classList.add(LIST_CLASS);
+      list.setAttribute(PROCESSED_ATTR, "list");
+
+      list.querySelectorAll(":scope > li").forEach((li) => {
+        if (isPlanStepListItem(li)) return;
+        li.classList.remove(BLOCK_CLASS);
+        li.removeAttribute("dir");
+      });
     });
   }
 
@@ -344,10 +401,11 @@ const PersianRTL = (() => {
 
     applyLtrIslands(contentRoot, ltrBlocksSelector);
     wrapInlineLatinRuns(contentRoot);
+    fixRtlLists(contentRoot);
     fixRtlTextBlocks(
       contentRoot,
       options.rtlTextBlocksSelector ||
-        "p, li, h1, h2, h3, h4, h5, h6, [role='listitem']"
+        "p, h1, h2, h3, h4, h5, h6, span.block, blockquote"
     );
 
     if (el !== contentRoot && !el.hasAttribute(PROCESSED_ATTR)) {
@@ -395,6 +453,7 @@ const PersianRTL = (() => {
           BLOCK_CLASS,
           DEEP_RESEARCH_CLASS,
           PLAN_STEP_CLASS,
+          LIST_CLASS,
           LTR_ISLAND_CLASS,
           "persian-rtl-composer"
         );
