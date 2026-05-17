@@ -1,0 +1,51 @@
+/* LTR enclaves inside RTL messages (code, pre, etc.) */
+.persian-rtl-ltr-island {
+  direction: ltr;
+  unicode-bidi: isolate;
+  text-align: left;
+}
+
+/* RTL markdown / overlay content */
+.persian-rtl-markdown[dir="rtl"] {
+  direction: rtl;
+  unicode-bidi: isolate;
+  text-align: right;
+}
+
+.persian-rtl-markdown[dir="rtl"] ul,
+.persian-rtl-markdown[dir="rtl"] ol {
+  padding-right: 1.5em;
+  padding-left: 0;
+}
+
+.persian-rtl-markdown[dir="rtl"] blockquote {
+  border-right: 3px solid currentColor;
+  border-left: none;
+  padding-right: 1em;
+  padding-left: 0;
+  margin-right: 0;
+}
+
+/* Composer: browser picks direction from first strong character */
+.persian-rtl-composer {
+  unicode-bidi: plaintext;
+  text-align: start;
+}
+
+.persian-rtl-composer[dir="rtl"] {
+  text-align: right;
+}
+
+.persian-rtl-composer[dir="ltr"] {
+  text-align: left;
+}
+
+/* Optional Persian-friendly font for RTL blocks */
+[dir="rtl"].persian-rtl-markdown,
+[dir="rtl"].persian-rtl-markdown *:not(code):not(pre):not(kbd):not(samp) {
+  font-family: Vazirmatn, Tahoma, "Segoe UI", Arial, sans-serif;
+}
+
+bdi[dir="ltr"] {
+  unicode-bidi: isolate;
+}
