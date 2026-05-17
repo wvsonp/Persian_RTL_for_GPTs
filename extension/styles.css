@@ -60,12 +60,15 @@
 
 .persian-rtl-markdown[dir="rtl"] ul,
 .persian-rtl-markdown[dir="rtl"] ol,
+.persian-rtl-markdown[dir="auto"] ul,
+.persian-rtl-markdown[dir="auto"] ol,
 ul.persian-rtl-list,
 ol.persian-rtl-list {
-  direction: rtl;
+  direction: rtl !important;
   padding-inline-end: 1.5em;
   padding-inline-start: 0;
   list-style-position: outside;
+  text-align: right;
 }
 
 .persian-rtl-markdown[dir="rtl"] ul > li,
@@ -115,6 +118,7 @@ ol.persian-rtl-list > li {
 }
 
 bdi[dir="ltr"] {
+  direction: ltr;
   unicode-bidi: isolate;
 }
 
@@ -142,8 +146,15 @@ bdi[dir="ltr"] {
 }
 
 .persian-rtl-block {
-  direction: rtl !important;
-  text-align: right !important;
+  direction: rtl;
+  text-align: right;
+}
+
+.persian-rtl-block.persian-rtl-mixed,
+.persian-rtl-markdown.persian-rtl-mixed,
+.persian-rtl-markdown[dir="auto"] {
+  direction: auto;
+  text-align: start;
   unicode-bidi: plaintext;
 }
 

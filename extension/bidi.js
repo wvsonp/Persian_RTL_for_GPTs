@@ -2,13 +2,15 @@
  * Bidirectional text utilities for Persian/Arabic + English mixed content.
  */
 const PersianRTL = (() => {
-  const RTL_SCRIPT_RE =
-    /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/;
-  const LATIN_RUN_RE = /[A-Za-z0-9@#%&*+=_\-./:?]+/g;
+  const RTL_CHAR_CLASS =
+    "\\u0600-\\u06FF\\u0750-\\u077F\\u08A0-\\u08FF\\uFB50-\\uFDFF\\uFE70-\\uFEFF";
+  const RTL_SCRIPT_RE = new RegExp(`[${RTL_CHAR_CLASS}]`);
+  const RTL_SEGMENT_RE = new RegExp(`[${RTL_CHAR_CLASS}]+`, "g");
   const PROCESSED_ATTR = "data-persian-rtl-processed";
   const LTR_ISLAND_CLASS = "persian-rtl-ltr-island";
   const MARKDOWN_CLASS = "persian-rtl-markdown";
   const BLOCK_CLASS = "persian-rtl-block";
+  const MIXED_CLASS = "persian-rtl-mixed";
   const DEEP_RESEARCH_CLASS = "persian-rtl-deep-research";
   const PLAN_STEP_CLASS = "persian-rtl-plan-step";
   const LIST_CLASS = "persian-rtl-list";
@@ -19,6 +21,33 @@ const PersianRTL = (() => {
    */
   function containsRTL(text) {
     return RTL_SCRIPT_RE.test(text);
+  }
+
+  /**
+   * @param {string} text
+   * @returns {boolean}
+   */
+  function containsLatinLetter(text) {
+    return /[A-Za-z]/.test(text);
+  }
+
+  /**
+   * @param {string} text
+   * @returns {boolean}
+   */
+  function isMixedRtlLatin(text) {
+    return containsRTL(text) && containsLatinLetter(text);
+  }
+
+  /**
+   * @param {string} chunk
+   * @returns {boolean}
+   */
+  function isListMarkerOnly(chunk) {
+    return (
+      !/[A-Za-z]{2,}/.test(chunk) &&
+      /^[\s\u2022\u2023\u25E6\u29BFoO●◦\-–—.:,،؛0-9]+$/.test(chunk)
+    );
   }
 
   /**
@@ -78,13 +107,13 @@ const PersianRTL = (() => {
   }
 
   /**
+   * Wrap whole English/Latin phrases in one LTR isolate (keeps word order).
    * @param {Text} textNode
    */
-  function wrapLatinRunsInTextNode(textNode) {
+  function wrapLatinPhrasesInTextNode(textNode) {
     const text = textNode.nodeValue;
-    if (!text || !LATIN_RUN_RE.test(text)) return;
+    if (!text || !containsLatinLetter(text)) return;
 
-    LATIN_RUN_RE.lastIndex = 0;
     const parent = textNode.parentNode;
     if (!parent || parent.closest("bdi")) return;
 
@@ -92,26 +121,45 @@ const PersianRTL = (() => {
     let lastIndex = 0;
     let match;
 
-    while ((match = LATIN_RUN_RE.exec(text)) !== null) {
-      const start = match.index;
-      const end = start + match[0].length;
-      if (start > lastIndex) {
-        fragment.appendChild(
-          document.createTextNode(text.slice(lastIndex, start))
-        );
+    RTL_SEGMENT_RE.lastIndex = 0;
+    while ((match = RTL_SEGMENT_RE.exec(text)) !== null) {
+      const rtlStart = match.index;
+      if (rtlStart > lastIndex) {
+        appendLtrChunk(fragment, text.slice(lastIndex, rtlStart));
       }
-      const bdi = document.createElement("bdi");
-      bdi.setAttribute("dir", "ltr");
-      bdi.textContent = match[0];
-      fragment.appendChild(bdi);
-      lastIndex = end;
+      fragment.appendChild(document.createTextNode(match[0]));
+      lastIndex = rtlStart + match[0].length;
     }
 
     if (lastIndex < text.length) {
-      fragment.appendChild(document.createTextNode(text.slice(lastIndex)));
+      appendLtrChunk(fragment, text.slice(lastIndex));
+    }
+
+    if (fragment.childNodes.length === 0) return;
+    if (
+      fragment.childNodes.length === 1 &&
+      fragment.firstChild.nodeType === Node.TEXT_NODE
+    ) {
+      return;
     }
 
     parent.replaceChild(fragment, textNode);
+  }
+
+  /**
+   * @param {DocumentFragment} fragment
+   * @param {string} chunk
+   */
+  function appendLtrChunk(fragment, chunk) {
+    if (!chunk) return;
+    if (containsLatinLetter(chunk) && !isListMarkerOnly(chunk)) {
+      const bdi = document.createElement("bdi");
+      bdi.setAttribute("dir", "ltr");
+      bdi.textContent = chunk;
+      fragment.appendChild(bdi);
+      return;
+    }
+    fragment.appendChild(document.createTextNode(chunk));
   }
 
   /**
@@ -124,7 +172,7 @@ const PersianRTL = (() => {
         if (!parent) return NodeFilter.FILTER_REJECT;
         if (parent.closest("bdi")) return NodeFilter.FILTER_REJECT;
         if (isInsideLtrIsland(parent)) return NodeFilter.FILTER_REJECT;
-        if (!node.nodeValue || !LATIN_RUN_RE.test(node.nodeValue)) {
+        if (!node.nodeValue || !containsLatinLetter(node.nodeValue)) {
           return NodeFilter.FILTER_REJECT;
         }
         return NodeFilter.FILTER_ACCEPT;
@@ -137,7 +185,7 @@ const PersianRTL = (() => {
       textNodes.push(/** @type {Text} */ (current));
     }
 
-    textNodes.forEach(wrapLatinRunsInTextNode);
+    textNodes.forEach(wrapLatinPhrasesInTextNode);
   }
 
   /**
@@ -171,8 +219,13 @@ const PersianRTL = (() => {
       }
       const text = getNodeText(block);
       if (!containsRTL(text)) return;
-      block.setAttribute("dir", "rtl");
-      block.classList.add(BLOCK_CLASS);
+      if (isMixedRtlLatin(text)) {
+        block.setAttribute("dir", "auto");
+        block.classList.add(BLOCK_CLASS, MIXED_CLASS);
+      } else {
+        block.setAttribute("dir", "rtl");
+        block.classList.add(BLOCK_CLASS);
+      }
     });
   }
 
@@ -394,8 +447,13 @@ const PersianRTL = (() => {
     const alreadyProcessed = contentRoot.getAttribute(PROCESSED_ATTR) === "1";
 
     if (!alreadyProcessed) {
-      contentRoot.setAttribute("dir", "rtl");
-      contentRoot.classList.add(MARKDOWN_CLASS);
+      if (isMixedRtlLatin(text)) {
+        contentRoot.setAttribute("dir", "auto");
+        contentRoot.classList.add(MARKDOWN_CLASS, MIXED_CLASS);
+      } else {
+        contentRoot.setAttribute("dir", "rtl");
+        contentRoot.classList.add(MARKDOWN_CLASS);
+      }
       contentRoot.setAttribute(PROCESSED_ATTR, "1");
     }
 
@@ -451,6 +509,7 @@ const PersianRTL = (() => {
         el.classList.remove(
           MARKDOWN_CLASS,
           BLOCK_CLASS,
+          MIXED_CLASS,
           DEEP_RESEARCH_CLASS,
           PLAN_STEP_CLASS,
           LIST_CLASS,

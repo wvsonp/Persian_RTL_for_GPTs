@@ -94,6 +94,24 @@ runSiteTests(
 
 runSiteTests(
   "https://chatgpt.com/",
+  `<div class="markdown"><p>هوش مصنوعی: (AI) Artificial Intelligence تعریف می‌شود.</p></div>`,
+  ({ PersianRTL, bidiOptions }) => {
+    const md = document.querySelector(".markdown");
+    PersianRTL.fixMessageRoot(md, bidiOptions);
+    const p = md.querySelector("p");
+    if (!p.classList.contains("persian-rtl-mixed")) {
+      throw new Error("mixed paragraph should have persian-rtl-mixed");
+    }
+    const bdi = p.querySelector("bdi[dir='ltr']");
+    if (!bdi || !/Artificial Intelligence/.test(bdi.textContent)) {
+      throw new Error("English phrase should be one LTR bdi with correct order");
+    }
+    PersianRTL.unfixAll();
+  }
+);
+
+runSiteTests(
+  "https://chatgpt.com/",
   `<motion.div class="markdown"><ul>
     <li><p>آیتم اول</p></li>
     <li><p>آیتم دوم با English</p></li>
@@ -149,8 +167,9 @@ runSiteTests(
     }
     const panel = document.querySelector(".markdown-main-panel");
     PersianRTL.fixMessageRoot(panel, bidiOptions);
-    if (panel.getAttribute("dir") !== "rtl") {
-      throw new Error("Gemini response dir=rtl");
+    const panelDir = panel.getAttribute("dir");
+    if (panelDir !== "auto" && panelDir !== "rtl") {
+      throw new Error("Gemini response should have dir auto or rtl");
     }
     PersianRTL.unfixAll();
   }
@@ -169,8 +188,9 @@ runSiteTests(
     }
     const prose = document.querySelector(".prose");
     PersianRTL.fixMessageRoot(prose, bidiOptions);
-    if (prose.getAttribute("dir") !== "rtl") {
-      throw new Error("Perplexity prose dir=rtl");
+    const proseDir = prose.getAttribute("dir");
+    if (proseDir !== "auto" && proseDir !== "rtl") {
+      throw new Error("Perplexity prose should have dir auto or rtl");
     }
     PersianRTL.unfixAll();
   }
