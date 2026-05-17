@@ -1,12 +1,15 @@
 # Persian RTL for GPTs
 
-Chrome extension that fixes mixed **Persian (RTL)** and **English (LTR)** text rendering on [ChatGPT](https://chatgpt.com).
+Chrome extension that fixes mixed **Persian (RTL)** and **English (LTR)** text rendering on:
+
+- [ChatGPT](https://chatgpt.com)
+- [Perplexity](https://www.perplexity.ai)
 
 ## What it fixes
 
-- **Assistant answers** — correct reading order when Persian and English appear in the same paragraph; lists and quotes align for RTL
-- **Prompt / input box** — `dir="auto"` so typing direction follows the text you enter
-- **Deep Research** — modals and overlay panels (source picker, report viewer) get the same bidirectional treatment
+- **Answers** — correct reading order when Persian and English appear in the same paragraph
+- **Prompt / input box** — `dir="auto"` so typing direction follows your text
+- **Research panels** (ChatGPT Deep Research plan cards, Perplexity research UI)
 - **Code blocks** — stay left-to-right inside Persian answers
 
 ## Install (development)
@@ -14,30 +17,32 @@ Chrome extension that fixes mixed **Persian (RTL)** and **English (LTR)** text r
 1. Clone this repository.
 2. Open Chrome → **Extensions** → enable **Developer mode**.
 3. Click **Load unpacked** and select the [`extension/`](extension/) folder.
-4. Open [https://chatgpt.com](https://chatgpt.com) and start a chat with mixed Persian and English.
+4. Open ChatGPT or Perplexity and chat in mixed Persian and English.
 
 ## Usage
 
-- The extension runs automatically when it detects Persian/Arabic script.
-- Click the toolbar icon to **enable or disable** fixing (preference is saved).
+- Runs automatically when Persian/Arabic script is detected.
+- Click the toolbar icon to **enable or disable** (saved across sessions).
+
+## Supported sites
+
+| Site | URL |
+|------|-----|
+| ChatGPT | `https://chatgpt.com/*` |
+| Perplexity | `https://www.perplexity.ai/*`, `https://perplexity.ai/*` |
 
 ## How it works
 
-- Content script on `https://chatgpt.com/*` only (no other sites in v1).
-- Sets `dir="rtl"` on message markdown when RTL script is present.
-- Wraps Latin runs (English words, numbers, URLs) in `<bdi dir="ltr">` for inline isolation.
-- Forces `pre` / `code` blocks to LTR islands.
-- Uses a debounced `MutationObserver` for streaming replies and dynamically opened panels.
+- Shared `bidi.js` for RTL detection, `<bdi>` wrapping, and LTR code islands.
+- Per-site selectors in `selectors.js` (`getActiveSiteConfig()`).
+- Debounced `MutationObserver` for streaming answers and dynamic UI.
 
 ## Privacy
 
-- No data collection.
-- No network requests.
+- No data collection or network requests.
 - Only `storage` permission (on/off toggle).
 
 ## Development tests
-
-Automated fixture tests (requires [jsdom](https://github.com/jsdom/jsdom)):
 
 ```bash
 cd extension
@@ -47,7 +52,7 @@ node test-bidi.mjs
 
 ## Roadmap
 
-- Perplexity, Claude, Gemini (shared `bidi.js`, site-specific selectors)
+- Claude, Gemini
 - Firefox build
 
 ## License

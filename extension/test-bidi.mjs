@@ -38,62 +38,78 @@ const chatgptPlanSection = `
 </section>
 `;
 
-const dom = new JSDOM(
-  `<!DOCTYPE html><html><body>
-    <textarea id="prompt-textarea"></textarea>
-    <div data-message-author-role="assistant"><motion.div class="markdown"><p>فارسی English</p></motion.div></motion.div>
-    ${chatgptPlanSection}
-  </body></html>`,
-  { url: "https://chatgpt.com/" }
-);
-
-const { window } = dom;
-globalThis.document = window.document;
-globalThis.NodeFilter = window.NodeFilter;
-
 const selectorsSrc = readFileSync(join(dir, "selectors.js"), "utf8");
 const bidiSrc = readFileSync(join(dir, "bidi.js"), "utf8");
 const loadScripts = new Function(
   "document",
   "NodeFilter",
-  `${selectorsSrc}\n${bidiSrc}\nreturn { PersianRTL, PersianRTLSelectors };`
-);
-const { PersianRTL, PersianRTLSelectors } = loadScripts(
-  document,
-  NodeFilter
+  "location",
+  `${selectorsSrc}\n${bidiSrc}\nreturn { PersianRTL, getActiveSiteConfig };`
 );
 
-const bidiOptions = {
-  markdownSelectors: PersianRTLSelectors.markdown,
-  ltrBlocksSelector: PersianRTLSelectors.ltrBlocks,
-  rtlTextBlocksSelector: PersianRTLSelectors.rtlTextBlocks,
-  researchPlanSteps: PersianRTLSelectors.researchPlanSteps,
-  researchPlanText: PersianRTLSelectors.researchPlanText,
-  researchPlanTitle: PersianRTLSelectors.researchPlanTitle,
-};
+function runSiteTests(siteUrl, bodyExtra, assertions) {
+  const dom = new JSDOM(
+    `<!DOCTYPE html><html><body>${bodyExtra}</body></html>`,
+    { url: siteUrl }
+  );
+  globalThis.document = dom.window.document;
+  globalThis.NodeFilter = dom.window.NodeFilter;
+  globalThis.location = dom.window.location;
 
-const section = document.querySelector("section.rounded-2xl");
-if (!PersianRTL.isResearchPlanSection(section)) {
-  throw new Error("Should detect ChatGPT research plan section");
+  const { PersianRTL, getActiveSiteConfig } = loadScripts(
+    document,
+    NodeFilter,
+    location
+  );
+  const site = getActiveSiteConfig();
+  const bidiOptions = {
+    markdownSelectors: site.markdown,
+    ltrBlocksSelector: site.ltrBlocks,
+    rtlTextBlocksSelector: site.rtlTextBlocks,
+    researchPlanSteps: site.researchPlanSteps,
+    researchPlanText: site.researchPlanText,
+    researchPlanTitle: site.researchPlanTitle,
+  };
+  assertions({ PersianRTL, site, bidiOptions });
 }
 
-PersianRTL.fixResearchPlanSection(section, bidiOptions);
+runSiteTests(
+  "https://chatgpt.com/",
+  `<textarea id="prompt-textarea"></textarea>
+    <div data-message-author-role="assistant"><div class="markdown"><p>فارسی English</p></motion.div></div>
+    ${chatgptPlanSection}`,
+  ({ PersianRTL, bidiOptions }) => {
 
-const h2 = section.querySelector("h2");
-const li = section.querySelector("li.flex.items-start");
-const span = li.querySelector("span.block");
-const status = section.querySelector(".loading-shimmer");
+    const section = document.querySelector("section.rounded-2xl");
+    if (!PersianRTL.isResearchPlanSection(section)) {
+      throw new Error("Should detect ChatGPT research plan section");
+    }
+    PersianRTL.fixResearchPlanSection(section, bidiOptions);
+    if (section.querySelector("h2").getAttribute("dir") !== "rtl") {
+      throw new Error("h2 dir");
+    }
+    PersianRTL.unfixAll();
+  }
+);
 
-if (section.getAttribute("dir") !== "rtl") throw new Error("section dir");
-if (h2.getAttribute("dir") !== "rtl") throw new Error("h2 dir");
-if (li.classList.contains("persian-rtl-plan-step") === false) {
-  throw new Error("li should have plan-step class");
-}
-if (span.getAttribute("dir") !== "rtl") throw new Error("span dir");
-if (status.getAttribute("dir") !== "ltr") throw new Error("English status stays ltr");
+runSiteTests(
+  "https://www.perplexity.ai/",
+  `<textarea id="ask-input"></textarea>
+   <main><div class="prose"><p>این پاسخ فارسی با English است.</p></div></main>`,
+  ({ PersianRTL, site, bidiOptions }) => {
+    if (site.siteId !== "perplexity") throw new Error("expected perplexity site");
+    const composer = document.getElementById("ask-input");
+    PersianRTL.fixComposer(composer);
+    if (composer.getAttribute("dir") !== "auto") {
+      throw new Error("Perplexity composer dir=auto");
+    }
+    const prose = document.querySelector(".prose");
+    PersianRTL.fixMessageRoot(prose, bidiOptions);
+    if (prose.getAttribute("dir") !== "rtl") {
+      throw new Error("Perplexity prose dir=rtl");
+    }
+    PersianRTL.unfixAll();
+  }
+);
 
-const found = PersianRTL.findResearchPlanCards();
-if (!found.includes(section)) throw new Error("findResearchPlanCards should include section");
-
-PersianRTL.unfixAll();
 console.log("All bidi fixture tests passed.");

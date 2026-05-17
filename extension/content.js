@@ -1,50 +1,69 @@
 /**
- * Content script: observe ChatGPT DOM and apply Persian RTL fixes.
+ * Content script: observe page DOM and apply Persian RTL fixes.
  */
 (function initPersianRTLContentScript() {
   const STORAGE_KEY = "persianRtlEnabled";
   const DEBOUNCE_MS = 150;
 
+  const site = getActiveSiteConfig();
+  const bidiOptions = {
+    markdownSelectors: site.markdown,
+    ltrBlocksSelector: site.ltrBlocks,
+    rtlTextBlocksSelector: site.rtlTextBlocks,
+    researchPlanSteps: site.researchPlanSteps,
+    researchPlanText: site.researchPlanText,
+    researchPlanTitle: site.researchPlanTitle,
+  };
+
   let enabled = true;
   let debounceTimer = null;
   let observer = null;
-
-  const bidiOptions = {
-    markdownSelectors: PersianRTLSelectors.markdown,
-    ltrBlocksSelector: PersianRTLSelectors.ltrBlocks,
-    rtlTextBlocksSelector: PersianRTLSelectors.rtlTextBlocks,
-    researchPlanSteps: PersianRTLSelectors.researchPlanSteps,
-    researchPlanText: PersianRTLSelectors.researchPlanText,
-    researchPlanTitle: PersianRTLSelectors.researchPlanTitle,
-  };
 
   function isEnabled() {
     return enabled;
   }
 
   function processMessages() {
-    const messages = queryAllSelectors(PersianRTLSelectors.messages);
+    const messages = queryAllSelectors(site.messages);
     for (const msg of messages) {
       PersianRTL.fixMessageRoot(msg, bidiOptions);
     }
   }
 
+  function processProseRoots() {
+    if (!site.proseRoots?.length) return;
+    const seen = new Set();
+    for (const selector of site.proseRoots) {
+      try {
+        document.querySelectorAll(selector).forEach((el) => {
+          if (seen.has(el)) return;
+          if (el.closest("[data-persian-rtl-processed]")) return;
+          if (!PersianRTL.containsRTL(el.textContent || "")) return;
+          seen.add(el);
+          PersianRTL.fixMessageRoot(el, bidiOptions);
+        });
+      } catch {
+        // skip invalid selector
+      }
+    }
+  }
+
   function processComposers() {
-    const composers = queryAllSelectors(PersianRTLSelectors.composer);
+    const composers = queryAllSelectors(site.composer);
     for (const composer of composers) {
       PersianRTL.fixComposer(composer);
     }
   }
 
   function processOverlays() {
-    const overlays = queryAllSelectors(PersianRTLSelectors.overlays);
+    const overlays = queryAllSelectors(site.overlays);
     for (const overlay of overlays) {
       PersianRTL.fixOverlay(overlay, bidiOptions);
     }
   }
 
   function processDeepResearch() {
-    const explicit = queryAllSelectors(PersianRTLSelectors.deepResearch);
+    const explicit = queryAllSelectors(site.deepResearch);
     for (const panel of explicit) {
       PersianRTL.fixDeepResearchPanel(panel, bidiOptions);
     }
@@ -54,12 +73,12 @@
       if (card.closest("[data-persian-rtl-processed='deep-research']")) continue;
       PersianRTL.fixDeepResearchPanel(card, bidiOptions);
     }
-
   }
 
   function scanAndFix() {
     if (!isEnabled()) return;
     processMessages();
+    processProseRoots();
     processComposers();
     processOverlays();
     processDeepResearch();
@@ -79,7 +98,10 @@
       if (!isEnabled()) return;
       const hasRelevantChange = mutations.some((m) => {
         if (m.type === "characterData") return true;
-        if (m.type === "childList" && (m.addedNodes.length || m.removedNodes.length)) {
+        if (
+          m.type === "childList" &&
+          (m.addedNodes.length || m.removedNodes.length)
+        ) {
           return true;
         }
         return false;
@@ -129,7 +151,7 @@
 
   chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     if (message?.type === "getStatus") {
-      sendResponse({ enabled: isEnabled() });
+      sendResponse({ enabled: isEnabled(), siteId: site.siteId });
       return true;
     }
     if (message?.type === "rescan") {
