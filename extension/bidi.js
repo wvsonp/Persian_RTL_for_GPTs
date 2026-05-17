@@ -8,6 +8,8 @@ const PersianRTL = (() => {
   const PROCESSED_ATTR = "data-persian-rtl-processed";
   const LTR_ISLAND_CLASS = "persian-rtl-ltr-island";
   const MARKDOWN_CLASS = "persian-rtl-markdown";
+  const BLOCK_CLASS = "persian-rtl-block";
+  const DEEP_RESEARCH_CLASS = "persian-rtl-deep-research";
 
   /**
    * @param {string} text
@@ -123,6 +125,83 @@ const PersianRTL = (() => {
   }
 
   /**
+   * Apply dir=rtl to individual text blocks (fixes Deep Research list rows).
+   * @param {Element} root
+   * @param {string} blockSelector
+   */
+  function fixRtlTextBlocks(root, blockSelector) {
+    root.querySelectorAll(blockSelector).forEach((block) => {
+      if (isInsideLtrIsland(block)) return;
+      const text = getNodeText(block);
+      if (!containsRTL(text)) return;
+      block.setAttribute("dir", "rtl");
+      block.classList.add(BLOCK_CLASS);
+    });
+  }
+
+  /**
+   * Find innermost containers that look like a Deep Research plan (RTL list + steps).
+   * @returns {Element[]}
+   */
+  function findResearchPlanCards() {
+    const candidates = [];
+    document.querySelectorAll("ul, ol").forEach((list) => {
+      if (!containsRTL(getNodeText(list))) return;
+      const items = list.querySelectorAll(":scope > li");
+      if (items.length < 2) return;
+
+      let root = list.parentElement;
+      for (let depth = 0; depth < 10 && root && root !== document.body; depth++) {
+        const textLen = getNodeText(root).length;
+        if (textLen > 0 && textLen < 12000) {
+          candidates.push(root);
+          break;
+        }
+        root = root.parentElement;
+      }
+    });
+
+    return candidates.filter((node) => {
+      return !candidates.some(
+        (other) => other !== node && node.contains(other)
+      );
+    });
+  }
+
+  /**
+   * @param {Element} el
+   * @param {object} options
+   * @returns {boolean}
+   */
+  function fixDeepResearchPanel(el, options) {
+    const {
+      markdownSelectors,
+      ltrBlocksSelector,
+      rtlTextBlocksSelector,
+    } = options;
+    const text = getNodeText(el);
+    if (!containsRTL(text)) return false;
+
+    el.classList.add(DEEP_RESEARCH_CLASS);
+    el.setAttribute("dir", "rtl");
+    el.setAttribute(PROCESSED_ATTR, "deep-research");
+
+    const contentRoot = resolveContentRoot(el, markdownSelectors);
+    if (contentRoot !== el) {
+      fixMessageRoot(el, options);
+    } else {
+      contentRoot.classList.add(MARKDOWN_CLASS);
+      contentRoot.setAttribute("dir", "rtl");
+      contentRoot.setAttribute(PROCESSED_ATTR, "1");
+      applyLtrIslands(contentRoot, ltrBlocksSelector);
+      wrapInlineLatinRuns(contentRoot);
+    }
+
+    fixRtlTextBlocks(el, rtlTextBlocksSelector);
+    return true;
+  }
+
+  /**
    * @param {Element} el
    * @param {object} options
    * @param {string[]} options.markdownSelectors
@@ -145,6 +224,11 @@ const PersianRTL = (() => {
 
     applyLtrIslands(contentRoot, ltrBlocksSelector);
     wrapInlineLatinRuns(contentRoot);
+    fixRtlTextBlocks(
+      contentRoot,
+      options.rtlTextBlocksSelector ||
+        "p, li, h1, h2, h3, h4, h5, h6, [role='listitem']"
+    );
 
     if (el !== contentRoot && !el.hasAttribute(PROCESSED_ATTR)) {
       el.setAttribute(PROCESSED_ATTR, "1");
@@ -188,6 +272,8 @@ const PersianRTL = (() => {
         el.removeAttribute("dir");
         el.classList.remove(
           MARKDOWN_CLASS,
+          BLOCK_CLASS,
+          DEEP_RESEARCH_CLASS,
           LTR_ISLAND_CLASS,
           "persian-rtl-composer"
         );
@@ -206,6 +292,8 @@ const PersianRTL = (() => {
     fixMessageRoot,
     fixComposer,
     fixOverlay,
+    fixDeepResearchPanel,
+    findResearchPlanCards,
     unfixAll,
     PROCESSED_ATTR,
   };

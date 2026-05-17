@@ -23,6 +23,17 @@ const PersianRTLSelectors = {
     '[aria-modal="true"]',
     '[data-state="open"][role="dialog"]',
   ],
+  /** Deep Research plan / question cards (not always role=dialog). */
+  deepResearch: [
+    '[data-testid*="research"]',
+    '[data-testid*="deep-research"]',
+    '[data-testid*="deep_research"]',
+    '[class*="deep-research"]',
+    '[class*="DeepResearch"]',
+    '[class*="research-plan"]',
+  ],
+  rtlTextBlocks:
+    "p, li, h1, h2, h3, h4, h5, h6, [role='listitem'], [role='heading'], dt, dd, blockquote, figcaption",
   ltrBlocks: "pre, code, kbd, samp, var, .math, .katex",
 };
 

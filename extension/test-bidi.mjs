@@ -20,6 +20,14 @@ const dom = new JSDOM(
     <motion.div role="dialog">
       <motion.div class="prose"><p>تحقیق Deep Research و API test</p></motion.div>
     </motion.div>
+    <motion.div class="deep-research-plan">
+      <h3>یک کیلو پنبه یا آهن</h3>
+      <ul>
+        <li><motion.div class="flex flex-row"><span class="icon">○</span><span>جمع‌آوری منابع پایه‌ای فیزیک و تعاریف جرم و وزن.</span></motion.div></li>
+        <li><motion.div class="flex flex-row"><span class="icon">○</span><span>مقایسه چگالی و حجم یک کیلوگرم از مواد مختلف.</span></motion.div></li>
+      </ul>
+      <motion.div class="actions"><button>Bearbeiten</button><button>Starten</button></motion.div>
+    </motion.div>
   </body></html>`,
   { url: "https://chatgpt.com/" }
 );
@@ -71,6 +79,24 @@ PersianRTL.fixOverlay(dialog, {
 });
 if (dialog.querySelector(".prose").getAttribute("dir") !== "rtl") {
   throw new Error("Overlay prose should be rtl");
+}
+
+const planCard = document.querySelector(".deep-research-plan");
+PersianRTL.fixDeepResearchPanel(planCard, {
+  markdownSelectors: PersianRTLSelectors.markdown,
+  ltrBlocksSelector: PersianRTLSelectors.ltrBlocks,
+  rtlTextBlocksSelector: PersianRTLSelectors.rtlTextBlocks,
+});
+const planTitle = planCard.querySelector("h3");
+const planLi = planCard.querySelector("li");
+if (planCard.getAttribute("dir") !== "rtl") {
+  throw new Error("Deep research card should be rtl");
+}
+if (planTitle.getAttribute("dir") !== "rtl") {
+  throw new Error("Deep research title should be rtl");
+}
+if (planLi.getAttribute("dir") !== "rtl") {
+  throw new Error("Deep research list item should be rtl");
 }
 
 PersianRTL.unfixAll();

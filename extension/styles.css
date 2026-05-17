@@ -49,3 +49,49 @@
 bdi[dir="ltr"] {
   unicode-bidi: isolate;
 }
+
+/* Deep Research plan card + per-line RTL blocks */
+.persian-rtl-deep-research {
+  direction: rtl;
+  text-align: right;
+}
+
+.persian-rtl-block {
+  direction: rtl !important;
+  text-align: right !important;
+  unicode-bidi: plaintext;
+}
+
+.persian-rtl-deep-research li.persian-rtl-block,
+.persian-rtl-markdown[dir="rtl"] li.persian-rtl-block {
+  list-style-position: inside;
+}
+
+/* ChatGPT plan rows: icon + text in a horizontal flex row */
+.persian-rtl-deep-research li.persian-rtl-block > div,
+.persian-rtl-deep-research li.persian-rtl-block > motion.div,
+.persian-rtl-markdown[dir="rtl"] li.persian-rtl-block > div,
+.persian-rtl-markdown[dir="rtl"] li.persian-rtl-block > motion.div,
+.persian-rtl-block[class*="flex"],
+.persian-rtl-deep-research .persian-rtl-block .flex,
+.persian-rtl-deep-research li.persian-rtl-block [class*="flex-row"],
+.persian-rtl-markdown[dir="rtl"] li.persian-rtl-block [class*="flex-row"] {
+  flex-direction: row-reverse !important;
+  justify-content: flex-end;
+  text-align: right;
+}
+
+.persian-rtl-deep-research ul,
+.persian-rtl-deep-research ol {
+  padding-right: 1.25em;
+  padding-left: 0;
+  margin-right: 0;
+}
+
+/* Keep action button bars LTR (Bearbeiten / Starten) */
+.persian-rtl-deep-research > div:last-child:has(button),
+.persian-rtl-deep-research [class*="footer"]:has(button),
+.persian-rtl-deep-research [class*="actions"]:has(button) {
+  direction: ltr;
+  text-align: left;
+}

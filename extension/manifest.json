@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Persian RTL for ChatGPT",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Fix mixed Persian (RTL) and English (LTR) text in ChatGPT answers, composer, and Deep Research panels.",
   "permissions": ["storage"],
   "host_permissions": ["https://chatgpt.com/*"],

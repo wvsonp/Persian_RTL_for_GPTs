@@ -12,6 +12,7 @@
   const bidiOptions = {
     markdownSelectors: PersianRTLSelectors.markdown,
     ltrBlocksSelector: PersianRTLSelectors.ltrBlocks,
+    rtlTextBlocksSelector: PersianRTLSelectors.rtlTextBlocks,
   };
 
   function isEnabled() {
@@ -39,11 +40,26 @@
     }
   }
 
+  function processDeepResearch() {
+    const explicit = queryAllSelectors(PersianRTLSelectors.deepResearch);
+    for (const panel of explicit) {
+      PersianRTL.fixDeepResearchPanel(panel, bidiOptions);
+    }
+
+    const planCards = PersianRTL.findResearchPlanCards();
+    for (const card of planCards) {
+      if (card.closest("[data-persian-rtl-processed='deep-research']")) continue;
+      PersianRTL.fixDeepResearchPanel(card, bidiOptions);
+    }
+
+  }
+
   function scanAndFix() {
     if (!isEnabled()) return;
     processMessages();
     processComposers();
     processOverlays();
+    processDeepResearch();
   }
 
   function scheduleScan() {
