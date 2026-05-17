@@ -1,12 +1,12 @@
 const STORAGE_KEY = "persianRtlEnabled";
-const SUPPORTED_HOSTS = ["chatgpt.com", "perplexity.ai"];
+const SUPPORTED_HOSTS = ["chatgpt.com", "perplexity.ai", "gemini.google.com"];
 
 const checkbox = document.getElementById("enabled");
 const statusEl = document.getElementById("status");
 
 function updateStatus(enabled) {
   statusEl.textContent = enabled
-    ? "Enabled on ChatGPT & Perplexity"
+    ? "Enabled on ChatGPT, Perplexity & Gemini"
     : "Disabled";
   statusEl.classList.toggle("off", !enabled);
 }

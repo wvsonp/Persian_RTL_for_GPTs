@@ -4,6 +4,7 @@ Chrome extension that fixes mixed **Persian (RTL)** and **English (LTR)** text r
 
 - [ChatGPT](https://chatgpt.com)
 - [Perplexity](https://www.perplexity.ai)
+- [Google Gemini](https://gemini.google.com)
 
 ## What it fixes
 
@@ -17,7 +18,7 @@ Chrome extension that fixes mixed **Persian (RTL)** and **English (LTR)** text r
 1. Clone this repository.
 2. Open Chrome → **Extensions** → enable **Developer mode**.
 3. Click **Load unpacked** and select the [`extension/`](extension/) folder.
-4. Open ChatGPT or Perplexity and chat in mixed Persian and English.
+4. Open ChatGPT, Perplexity, or Gemini and chat in mixed Persian and English.
 
 ## Usage
 
@@ -30,6 +31,7 @@ Chrome extension that fixes mixed **Persian (RTL)** and **English (LTR)** text r
 |------|-----|
 | ChatGPT | `https://chatgpt.com/*` |
 | Perplexity | `https://www.perplexity.ai/*`, `https://perplexity.ai/*` |
+| Google Gemini | `https://gemini.google.com/*` |
 
 ## How it works
 
@@ -46,13 +48,13 @@ Chrome extension that fixes mixed **Persian (RTL)** and **English (LTR)** text r
 
 ```bash
 cd extension
-npm install jsdom
-node test-bidi.mjs
+npm install
+npm test
 ```
 
 ## Roadmap
 
-- Claude, Gemini
+- Claude
 - Firefox build
 
 ## License

@@ -93,6 +93,29 @@ runSiteTests(
 );
 
 runSiteTests(
+  "https://gemini.google.com/app",
+  `<div class="conversation-container">
+     <motion.div class="user-query-container"><p class="query-text">سلام English</p></motion.div>
+     <div class="markdown-main-panel model-response-text"><p>پاسخ فارسی with English</p></div>
+   </div>
+   <div class="textarea new-input-ui"><p>ورودی</p></div>`,
+  ({ PersianRTL, site, bidiOptions }) => {
+    if (site.siteId !== "gemini") throw new Error("expected gemini site");
+    const composer = document.querySelector(".textarea.new-input-ui > p");
+    PersianRTL.fixComposer(composer);
+    if (composer.getAttribute("dir") !== "auto") {
+      throw new Error("Gemini composer dir=auto");
+    }
+    const panel = document.querySelector(".markdown-main-panel");
+    PersianRTL.fixMessageRoot(panel, bidiOptions);
+    if (panel.getAttribute("dir") !== "rtl") {
+      throw new Error("Gemini response dir=rtl");
+    }
+    PersianRTL.unfixAll();
+  }
+);
+
+runSiteTests(
   "https://www.perplexity.ai/",
   `<textarea id="ask-input"></textarea>
    <main><div class="prose"><p>این پاسخ فارسی با English است.</p></div></main>`,
